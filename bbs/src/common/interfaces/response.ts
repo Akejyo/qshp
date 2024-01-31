@@ -280,7 +280,72 @@ export interface PostDetailsByPostId {
   [post_id: number]: PostExtraDetails
 }
 
-export type ForumBasics = {
+export interface PostPosition {
+  thread_id: number
+  position: number
+}
+
+export interface UserInfos {
+  views: number
+  emailstatus: boolean
+  videophotostatus: boolean
+  title: string
+  sign: string
+  bio: string
+  friends: number
+  threads: number
+  albums: number
+  sharings: number
+  doings: number
+  posts: number
+  gender: boolean
+  birthday: string
+  education: string
+  birthprovince: string
+  birthcity: string
+  resideprovince: string
+  residecity: string
+  medals: string
+  admin_group: number
+  user_group: number
+  online_time: number
+  registered_at: number
+  last_login_at: number
+  lastactivity: number
+  lastpost: number
+  zone: number
+  credits: number
+  droplets: number
+  prestiges: number
+}
+
+export interface Settings {
+  profile?: SettingsProfile
+  privacy?: SettingsPrivacy
+  security?: SettingsSecurity
+}
+
+export interface SettingsProfile {
+  username: string
+  introduction: string
+  introductionprivacy: number
+  title: string
+  sign: string
+}
+
+export interface SettingsPrivacy {
+  friendslistprivacy: number
+  messageboardprivacy: number
+}
+
+export interface SettingsSecurity {
+  password: string
+  email: string
+  securityquestion: string
+  securityanswer: string
+}
+
+export type ForumCommon = {
   fid: number
   name: string
 }
