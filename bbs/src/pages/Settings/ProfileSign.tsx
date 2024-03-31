@@ -84,7 +84,6 @@ const ProfileSign = () => {
   const [linkUrl, setLinkUrl] = useState<string>('')
   const [linkText, setLinkText] = useState<string>('')
   const [smilyAnchorEl, setSmilyAnchorEl] = useState<null | HTMLElement>(null)
-  const [smily, setSmily] = useState('')
   const [smilyKind, setSmilyKind] = useState(smilyData[0])
 
   const handleTextFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,7 +120,7 @@ const ProfileSign = () => {
     setLinkUrl('')
     setLinkText('')
     setSmilyAnchorEl(null)
-    setSmily('')
+    setSmilyKind(smilyData[0])
   }
   const handleColorSelect = (color: string) => {
     setColorAnchorEl(null)
