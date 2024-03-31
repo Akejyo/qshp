@@ -10,17 +10,23 @@ import {
 import {
   Box,
   Button,
+  Divider,
   Grid,
   IconButton,
   Popover,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
 } from '@mui/material'
 
+import { kSmilyBasePath } from '@/components/RichText/renderer'
+import { smilyData } from '@/components/RichText/smilyData'
 import { StyledField } from '@/components/StyledField'
 
+const smilyScaleFactor = 0.8
 const colors = [
   ['Black', '黑色'],
   ['Sienna', '赭色'],
@@ -77,6 +83,9 @@ const ProfileSign = () => {
   const [linkAnchorEl, setLinkAnchorEl] = useState<null | HTMLElement>(null)
   const [linkUrl, setLinkUrl] = useState<string>('')
   const [linkText, setLinkText] = useState<string>('')
+  const [smilyAnchorEl, setSmilyAnchorEl] = useState<null | HTMLElement>(null)
+  const [smily, setSmily] = useState('')
+  const [smilyKind, setSmilyKind] = useState(smilyData[0])
 
   const handleTextFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSign(e.target.value)
@@ -105,12 +114,14 @@ const ProfileSign = () => {
   const handleClose = () => {
     setColorAnchorEl(null)
     setImageAnchorEl(null)
-    setLinkAnchorEl(null)
     setImageUrl('')
     setImageWidth(0)
     setImageHeight(0)
+    setLinkAnchorEl(null)
     setLinkUrl('')
     setLinkText('')
+    setSmilyAnchorEl(null)
+    setSmily('')
   }
   const handleColorSelect = (color: string) => {
     setColorAnchorEl(null)
@@ -128,10 +139,18 @@ const ProfileSign = () => {
     setImageAnchorEl(event.currentTarget)
   }
   const handleImageUrlSubmit = () => {
-    const newSign =
-      sign.slice(0, selectionStart) +
-      `[img=${imageWidth},${imageHeight}]${imageUrl}[/img]` +
-      sign.slice(selectionStart)
+    let newSign = ''
+    if (imageWidth === 0 && imageHeight === 0) {
+      newSign =
+        sign.slice(0, selectionStart) +
+        `[img]${imageUrl}[/img]` +
+        sign.slice(selectionStart)
+    } else {
+      newSign =
+        sign.slice(0, selectionStart) +
+        `[img=${imageWidth},${imageHeight}]${imageUrl}[/img]` +
+        sign.slice(selectionStart)
+    }
     setSign(newSign)
     setImageAnchorEl(null)
   }
@@ -147,7 +166,11 @@ const ProfileSign = () => {
     setSign(newSign)
     setLinkAnchorEl(null)
   }
-  const handleEmoticonButtonClick = () => {}
+
+  const handleSmilyButtonClick = (event: React.MouseEvent<HTMLElement>) => {
+    setSmilyAnchorEl(event.currentTarget)
+  }
+
   return (
     <>
       <Stack direction="column" sx={{ width: '70%' }}>
@@ -302,10 +325,70 @@ const ProfileSign = () => {
             </Box>
           </Popover>
           <Tooltip title="表情">
-            <IconButton onClick={handleEmoticonButtonClick}>
+            <IconButton onClick={handleSmilyButtonClick}>
               <InsertEmoticon />
             </IconButton>
           </Tooltip>
+          <Popover
+            open={Boolean(smilyAnchorEl)}
+            anchorEl={smilyAnchorEl}
+            onClose={handleClose}
+            disableScrollLock
+          >
+            <Box maxWidth={640}>
+              <Tabs
+                variant="scrollable"
+                scrollButtons="auto"
+                value={smilyKind}
+                onChange={(_, newValue) => setSmilyKind(newValue)}
+              >
+                {smilyData.map((smilyKind, index) => (
+                  <Tab
+                    key={index}
+                    label={smilyKind.name}
+                    value={smilyKind}
+                  ></Tab>
+                ))}
+              </Tabs>
+              <Divider />
+              <Grid
+                key={smilyKind.id}
+                container
+                maxHeight="300px"
+                overflow="auto"
+                flexShrink={1}
+                sx={{ ml: 1 }}
+              >
+                {smilyKind.items.map((item, index) => (
+                  <Grid key={index} item>
+                    <IconButton
+                      onClick={() => {
+                        const newSign =
+                          sign.slice(0, selectionStart) +
+                          `[s:${item.id}]` +
+                          sign.slice(selectionEnd)
+                        setSign(newSign)
+                        setSmilyAnchorEl(null)
+                      }}
+                    >
+                      <img
+                        src={`${kSmilyBasePath}/${smilyKind.path}/${item.path}`}
+                        loading="lazy"
+                        style={{
+                          width: `${item.width * smilyScaleFactor}px`,
+                          height: `${Math.floor(
+                            (item.thumbnailHeight / item.thumbnailWidth) *
+                              item.width *
+                              smilyScaleFactor
+                          )}px`,
+                        }}
+                      />
+                    </IconButton>
+                  </Grid>
+                ))}
+              </Grid>
+            </Box>
+          </Popover>
         </Stack>
         <StyledField
           multiline
