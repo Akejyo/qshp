@@ -80,11 +80,13 @@ const ProfileSign = () => {
   const [imageUrl, setImageUrl] = useState<string>('')
   const [imageWidth, setImageWidth] = useState<number>(0)
   const [imageHeight, setImageHeight] = useState<number>(0)
+  const [isFirstFocus, setIsFirstFocus] = useState<boolean>(true)
   const [linkAnchorEl, setLinkAnchorEl] = useState<null | HTMLElement>(null)
   const [linkUrl, setLinkUrl] = useState<string>('')
   const [linkText, setLinkText] = useState<string>('')
   const [smilyAnchorEl, setSmilyAnchorEl] = useState<null | HTMLElement>(null)
   const [smilyKind, setSmilyKind] = useState(smilyData[0])
+  const [previewSign, setPreviewSign] = useState<string>('')
 
   const handleTextFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSign(e.target.value)
@@ -116,6 +118,7 @@ const ProfileSign = () => {
     setImageUrl('')
     setImageWidth(0)
     setImageHeight(0)
+    setIsFirstFocus(true)
     setLinkAnchorEl(null)
     setLinkUrl('')
     setLinkText('')
@@ -123,7 +126,6 @@ const ProfileSign = () => {
     setSmilyKind(smilyData[0])
   }
   const handleColorSelect = (color: string) => {
-    setColorAnchorEl(null)
     setColor(color)
     const newSign =
       sign.slice(0, selectionStart) +
@@ -132,10 +134,22 @@ const ProfileSign = () => {
       '[/color]' +
       sign.slice(selectionEnd)
     setSign(newSign)
+    handleClose()
   }
 
   const handleImageButtonClick = (event: React.MouseEvent<HTMLElement>) => {
     setImageAnchorEl(event.currentTarget)
+  }
+  const handleFirstFocusWidthOrHeight = () => {
+    if (isFirstFocus) {
+      setIsFirstFocus(false)
+      const img = new Image()
+      img.onload = () => {
+        setImageWidth(img.width)
+        setImageHeight(img.height)
+      }
+      img.src = imageUrl
+    }
   }
   const handleImageUrlSubmit = () => {
     let newSign = ''
@@ -151,7 +165,7 @@ const ProfileSign = () => {
         sign.slice(selectionStart)
     }
     setSign(newSign)
-    setImageAnchorEl(null)
+    handleClose()
   }
 
   const handleLinkButtonClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -163,11 +177,38 @@ const ProfileSign = () => {
       `[url=${linkUrl}]${linkText}[/url]` +
       sign.slice(selectionStart)
     setSign(newSign)
-    setLinkAnchorEl(null)
+    handleClose()
   }
 
   const handleSmilyButtonClick = (event: React.MouseEvent<HTMLElement>) => {
     setSmilyAnchorEl(event.currentTarget)
+  }
+
+  const handlePreviewButtonClick = () => {
+    let previewSign = sign.replace(/\[b\]/g, '<b>')
+    previewSign = previewSign.replace(/\[\/b\]/g, '</b>')
+    previewSign = previewSign.replace(/\[color=(.*?)\]/g, '<font color="$1">')
+    previewSign = previewSign.replace(/\[\/color\]/g, '</font>')
+    previewSign = previewSign.replace(
+      /\[img\](.*?)\[\/img\]/g,
+      '<img src="$1" />'
+    )
+    previewSign = previewSign.replace(
+      /\[img=(.*?),(.*?)\](.*?)\[\/img\]/g,
+      '<img src="$3" width="$1" />'
+    )
+    previewSign = previewSign.replace(/\[\/img\]/g, '" />')
+    previewSign = previewSign.replace(/\[url=(.*?)\]/g, '<a href="$1">')
+    previewSign = previewSign.replace(/\[\/url\]/g, '</a>')
+    previewSign = previewSign.replace(
+      /\[s:(.*?)\]/g,
+      (match, id) =>
+        `<img src="${kSmilyBasePath}/${smilyKind.path}/${smilyKind.items.find(
+          (item) => item.id == id
+        )?.path}" loading="lazy" style="width: 50px; height: 50px;"/>`
+    )
+    previewSign = previewSign.replace(/\[\/s:(.*?)\]/g, '" />')
+    setPreviewSign(previewSign)
   }
 
   return (
@@ -220,6 +261,12 @@ const ProfileSign = () => {
             anchorEl={imageAnchorEl}
             onClose={handleClose}
             disableScrollLock
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleImageUrlSubmit()
+              }
+            }}
           >
             <Box
               sx={{ mx: 3, my: 2 }}
@@ -248,11 +295,13 @@ const ProfileSign = () => {
                       },
                       mr: 1,
                     }}
+                    value={imageWidth ? imageWidth : ''}
                     onChange={(e) =>
                       setImageWidth(
                         parseInt((e.target as HTMLInputElement).value)
                       )
                     }
+                    onFocus={handleFirstFocusWidthOrHeight}
                   />
                 </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -267,11 +316,13 @@ const ProfileSign = () => {
                         padding: '8px',
                       },
                     }}
+                    value={imageHeight ? imageHeight : ''}
                     onChange={(e) =>
                       setImageHeight(
                         parseInt((e.target as HTMLInputElement).value)
                       )
                     }
+                    onFocus={handleFirstFocusWidthOrHeight}
                   />
                 </Box>
               </Stack>
@@ -294,6 +345,12 @@ const ProfileSign = () => {
             anchorEl={linkAnchorEl}
             onClose={handleClose}
             disableScrollLock
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleLinkSubmit()
+              }
+            }}
           >
             <Box sx={{ mx: 3, my: 2, width: '300px' }}>
               <Typography>请输入链接地址：</Typography>
@@ -367,7 +424,7 @@ const ProfileSign = () => {
                           `[s:${item.id}]` +
                           sign.slice(selectionEnd)
                         setSign(newSign)
-                        setSmilyAnchorEl(null)
+                        handleClose()
                       }}
                     >
                       <img
@@ -388,6 +445,10 @@ const ProfileSign = () => {
               </Grid>
             </Box>
           </Popover>
+          <Stack sx={{ flexGrow: 1 }}></Stack>
+          <Button onClick={handlePreviewButtonClick}>
+            <Typography>预览</Typography>
+          </Button>
         </Stack>
         <StyledField
           multiline
@@ -395,6 +456,10 @@ const ProfileSign = () => {
           value={sign}
           onChange={handleTextFieldChange}
           onSelect={handleTextFieldSelect}
+        />
+        <div
+          style={{ whiteSpace: 'pre-wrap' }}
+          dangerouslySetInnerHTML={{ __html: previewSign }}
         />
       </Stack>
     </>
