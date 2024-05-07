@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import {
   ColorLens,
@@ -27,11 +27,8 @@ import { kSmilyBasePath } from '@/components/RichText/renderer'
 import { smilyData } from '@/components/RichText/smilyData'
 import { StyledField } from '@/components/StyledField'
 
-const smilyScaleFactor = 0.8
 const ProfileSign = () => {
   const [sign, setSign] = useState('之前的个人签名')
-  const [selectionStart, setSelectionStart] = useState<number>(0)
-  const [selectionEnd, setSelectionEnd] = useState<number>(0)
   const [color, setColor] = useState('')
   const [imageAnchorEl, setImageAnchorEl] = useState<null | HTMLElement>(null)
   const [imageUrl, setImageUrl] = useState<string>('')
@@ -44,26 +41,29 @@ const ProfileSign = () => {
   const [smilyAnchorEl, setSmilyAnchorEl] = useState<null | HTMLElement>(null)
   const [smilyKind, setSmilyKind] = useState(smilyData[0])
   const [previewSign, setPreviewSign] = useState<string>('')
-
-  const handleTextFieldChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSign(e.target.value)
-    setSelectionStart(e.target.selectionStart as number)
-    setSelectionEnd(e.target.selectionEnd as number)
-  }
-
-  const handleTextFieldSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectionStart(e.target.selectionStart as number)
-    setSelectionEnd(e.target.selectionEnd as number)
-  }
+  const inputRef = useRef<HTMLInputElement>(null)
+  const position = useRef<number>(0)
 
   const handleBoldButtonClick = () => {
+    if (
+      !inputRef.current ||
+      inputRef.current.selectionStart === null ||
+      inputRef.current.selectionEnd === null
+    )
+      return
+    const insertTextPre = `[b]`
+    const insertTextSuf = '[/b]'
     const newSign =
-      sign.slice(0, selectionStart) +
-      '[b]' +
-      sign.slice(selectionStart, selectionEnd) +
-      '[/b]' +
-      sign.slice(selectionEnd)
+      sign.slice(0, inputRef.current.selectionStart) +
+      insertTextPre +
+      sign.slice(
+        inputRef.current.selectionStart,
+        inputRef.current.selectionEnd
+      ) +
+      insertTextSuf +
+      sign.slice(inputRef.current.selectionEnd)
     setSign(newSign)
+    position.current = inputRef.current.selectionEnd + insertTextPre.length
   }
 
   const handleClose = () => {
@@ -79,15 +79,35 @@ const ProfileSign = () => {
     setSmilyAnchorEl(null)
     setSmilyKind(smilyData[0])
   }
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus()
+      if (position.current)
+        inputRef.current.setSelectionRange(position.current, position.current)
+    }
+  }, [sign])
+
   const handleColorSelect = () => {
     if (color === '') return
+    if (
+      !inputRef.current ||
+      inputRef.current.selectionStart === null ||
+      inputRef.current.selectionEnd === null
+    )
+      return
+    const insertTextPre = `[color=${color}]`
+    const insertTextSuf = '[/color]'
     const newSign =
-      sign.slice(0, selectionStart) +
-      `[color=${color}]` +
-      sign.slice(selectionStart, selectionEnd) +
-      '[/color]' +
-      sign.slice(selectionEnd)
+      sign.slice(0, inputRef.current.selectionStart) +
+      insertTextPre +
+      sign.slice(
+        inputRef.current.selectionStart,
+        inputRef.current.selectionEnd
+      ) +
+      insertTextSuf +
+      sign.slice(inputRef.current.selectionEnd)
     setSign(newSign)
+    position.current = inputRef.current.selectionEnd + insertTextPre.length
     handleClose()
   }
 
@@ -107,17 +127,28 @@ const ProfileSign = () => {
   }
   const handleImageUrlSubmit = () => {
     let newSign = ''
-    if (imageWidth === 0 && imageHeight === 0) {
-      newSign =
-        sign.slice(0, selectionStart) +
-        `[img]${imageUrl}[/img]` +
-        sign.slice(selectionStart)
+    if (
+      !inputRef.current ||
+      inputRef.current.selectionStart === null ||
+      inputRef.current.selectionEnd === null
+    )
+      return
+    let insertTextPre = ''
+    let insertTextSuf = ''
+    if (!imageWidth || !imageHeight) {
+      insertTextPre = '[img]'
+      insertTextSuf = '[/img]'
     } else {
-      newSign =
-        sign.slice(0, selectionStart) +
-        `[img=${imageWidth},${imageHeight}]${imageUrl}[/img]` +
-        sign.slice(selectionStart)
+      insertTextPre = `[img=${imageWidth},${imageHeight}]`
+      insertTextSuf = '[/img]'
     }
+    newSign =
+      sign.slice(0, inputRef.current.selectionStart) +
+      `${insertTextPre}${imageUrl}${insertTextSuf}` +
+      sign.slice(inputRef.current.selectionStart)
+    position.current =
+      inputRef.current.selectionStart +
+      `${insertTextPre}${imageUrl}${insertTextSuf}`.length
     setSign(newSign)
     handleClose()
   }
@@ -126,11 +157,23 @@ const ProfileSign = () => {
     setLinkAnchorEl(event.currentTarget)
   }
   const handleLinkSubmit = () => {
+    if (
+      !inputRef.current ||
+      inputRef.current.selectionStart === null ||
+      inputRef.current.selectionEnd === null
+    )
+      return
+    const insertTextPre = `[url=${linkUrl}]`
+    const insertTextSuf = '[/url]'
     const newSign =
-      sign.slice(0, selectionStart) +
-      `[url=${linkUrl}]${linkText}[/url]` +
-      sign.slice(selectionStart)
+      sign.slice(0, inputRef.current.selectionStart) +
+      `${insertTextPre}${linkText}${insertTextSuf}` +
+      sign.slice(inputRef.current.selectionStart)
     setSign(newSign)
+    position.current =
+      inputRef.current.selectionStart +
+      `${insertTextPre}${linkText}${insertTextSuf}`.length
+
     handleClose()
   }
 
@@ -157,13 +200,16 @@ const ProfileSign = () => {
     previewSign = previewSign.replace(/\[\/img\]/g, '" />')
     previewSign = previewSign.replace(/\[url=(.*?)\]/g, '<a href="$1">')
     previewSign = previewSign.replace(/\[\/url\]/g, '</a>')
-    previewSign = previewSign.replace(
-      /\[s:(.*?)\]/g,
-      (match, id) =>
-        `<img src="${kSmilyBasePath}/${smilyKind.path}/${smilyKind.items.find(
-          (item) => item.id == id
-        )?.path}" loading="lazy" style="width: 50px; height: 50px;"/>`
-    )
+    previewSign = previewSign.replace(/\[s:(.*?)\]/g, (match, id) => {
+      const smilyKind = smilyData.find((kind) =>
+        kind.items.some((item) => item.id == id)
+      )
+      if (!smilyKind) return match
+      return `<img src="${kSmilyBasePath}/${
+        smilyKind.path
+      }/${smilyKind.items.find((item) => item.id == id)
+        ?.path}" loading="lazy"/>`
+    })
     previewSign = previewSign.replace(/\[\/s:(.*?)\]/g, '" />')
     setPreviewSign(previewSign)
   }
@@ -361,11 +407,16 @@ const ProfileSign = () => {
                   <Grid key={index} item>
                     <IconButton
                       onClick={() => {
+                        if (inputRef.current === null) return
+                        const selectionStart = inputRef.current.selectionStart!
+                        const selectionEnd = inputRef.current.selectionEnd!
+                        const insertText = `[s:${item.id}]`
                         const newSign =
                           sign.slice(0, selectionStart) +
-                          `[s:${item.id}]` +
+                          insertText +
                           sign.slice(selectionEnd)
                         setSign(newSign)
+                        position.current = selectionStart + insertText.length
                         handleClose()
                       }}
                     >
@@ -373,11 +424,10 @@ const ProfileSign = () => {
                         src={`${kSmilyBasePath}/${smilyKind.path}/${item.path}`}
                         loading="lazy"
                         style={{
-                          width: `${item.width * smilyScaleFactor}px`,
+                          width: `${item.width}px`,
                           height: `${Math.floor(
                             (item.thumbnailHeight / item.thumbnailWidth) *
-                              item.width *
-                              smilyScaleFactor
+                              item.width
                           )}px`,
                         }}
                       />
@@ -392,8 +442,11 @@ const ProfileSign = () => {
           multiline
           rows={5}
           value={sign}
-          onChange={handleTextFieldChange}
-          onSelect={handleTextFieldSelect}
+          onChange={(e) => {
+            setSign(e.target.value)
+            position.current = inputRef.current!.selectionEnd!
+          }}
+          inputRef={inputRef}
         />
         <div
           style={{ whiteSpace: 'pre-wrap', marginTop: '10px' }}

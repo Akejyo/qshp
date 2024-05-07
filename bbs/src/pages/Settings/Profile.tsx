@@ -15,7 +15,6 @@ import {
 import { StyledField } from '@/components/StyledField'
 import { StyledSelect } from '@/components/StyledSelect'
 
-import ProfileAvatar from './ProfileAvatar'
 import ProfileSign from './ProfileSign'
 
 const menuItems = ['公开', '好友可见', '保密']
