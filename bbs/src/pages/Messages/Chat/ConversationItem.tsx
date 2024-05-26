@@ -3,6 +3,7 @@ import { forwardRef } from 'react'
 import { Groups } from '@mui/icons-material'
 import {
   Badge,
+  Checkbox,
   ListItem,
   ListItemButton,
   Avatar as MuiAvatar,
@@ -22,32 +23,58 @@ type ConversationItemProps = {
   selected?: boolean
   lite?: boolean
   summary?: boolean
+  showOptSelect: boolean
+  checked: boolean
+  onCheckboxChange: (isChecked: boolean, id: number) => void
 }
 
 const ConversationItem = forwardRef<
   HTMLLIElement | null,
   ConversationItemProps
 >(function ConversationItem(
-  { chat, selected, lite, summary }: ConversationItemProps,
+  {
+    chat,
+    selected,
+    lite,
+    summary,
+    showOptSelect,
+    checked,
+    onCheckboxChange,
+  }: ConversationItemProps,
   ref?
 ) {
+  const handleCheckboxChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    onCheckboxChange(event.target.checked, chat.conversation_id)
+  }
+
   const liteProps = lite
     ? {
         flexShrink: 1,
         minWidth: '1em',
       }
     : {}
+
   return (
     <ListItem
       key={chat.conversation_id}
+      secondaryAction={
+        showOptSelect && (
+          <Checkbox
+            edge="start"
+            checked={checked}
+            onChange={handleCheckboxChange}
+            style={!lite ? { marginRight: '20px' } : { marginRight: '0px' }}
+          />
+        )
+      }
       disableGutters
       disablePadding
       ref={ref}
     >
       <ListItemButton
         selected={selected || chat.unread}
-        component={Link}
-        to={pages.chat(chat.conversation_id)}
+        component={Link} // 使用 Link 组件
+        to={pages.chat(chat.conversation_id)} // 跳转链接到对应聊天页面
       >
         <Stack direction="row" {...liteProps}>
           <ChatAvatar chat={chat} summary={summary} />
@@ -64,6 +91,7 @@ const ConversationItem = forwardRef<
   )
 })
 
+// 根据聊天类型显示相应的头像
 const ChatAvatar = ({
   chat,
   summary,
@@ -79,6 +107,7 @@ const ChatAvatar = ({
     ) : (
       <Avatar uid={chat.to_uid} />
     )
+  // 如果不是摘要模式且有未读消息，则在头像上显示未读消息的标记
   return !summary && chat.unread ? (
     <Badge color="warning" variant="dot">
       {avatar}
@@ -88,6 +117,7 @@ const ChatAvatar = ({
   )
 }
 
+// 显示聊天用户或群组名称
 const ChatUsers = ({
   chat,
   lite,
@@ -134,6 +164,7 @@ const ChatUsers = ({
   )
 }
 
+// 显示聊天摘要信息
 const Summary = ({
   chat,
   lite,
