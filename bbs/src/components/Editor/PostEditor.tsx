@@ -13,6 +13,7 @@ import {
   TextField,
   Typography,
   debounce,
+  useMediaQuery,
 } from '@mui/material'
 
 import { editPost, postThread, replyThread } from '@/apis/thread'
@@ -95,6 +96,7 @@ const PostEditor = ({
   autoFocus?: boolean
 }) => {
   kind = kind || 'newthread'
+  smallAuthor = smallAuthor || useMediaQuery('(max-width: 640px)')
   if (kind == 'reply' && !threadId) {
     return <></>
   }
@@ -266,10 +268,14 @@ const PostEditor = ({
     if (!legacyHtml && !legacy && legacyPost) {
       console.log(convertLegacySimple(legacyPost.message))
       setLegacyHtml(
-        renderLegacyPostToDangerousHtml({
-          ...legacyPost,
-          message: convertLegacySimple(legacyPost.message),
-        })
+        renderLegacyPostToDangerousHtml(
+          {
+            ...legacyPost,
+            message: convertLegacySimple(legacyPost.message),
+          },
+          undefined,
+          useMediaQuery('(max-width: 640px)') ? 'small' : 'default'
+        )
       )
     }
     setEditLegacy(legacy)

@@ -17,6 +17,7 @@ import {
   Select,
   Skeleton,
   Stack,
+  useMediaQuery,
   useTheme,
 } from '@mui/material'
 import { SelectInputProps } from '@mui/material/Select/SelectInput'
@@ -136,13 +137,14 @@ const ForumPagination = forwardRef(function ForumPagination(
   },
   ref
 ) {
+  const thinView = useMediaQuery('(max-width: 560px)')
   return count > 1 ? (
     <Pagination
       size="small"
       count={count}
       page={page}
       onChange={onChange}
-      boundaryCount={3}
+      boundaryCount={thinView ? 1 : 3}
       siblingCount={1}
       variant="outlined"
       shape="rounded"
@@ -259,6 +261,9 @@ function Forum() {
     threadListTop.current?.scrollIntoView()
   }
 
+  const hideSidebar = useMediaQuery('(max-width: 1000px)')
+  const thinView = useMediaQuery('(max-width: 560px)')
+
   return (
     <Stack direction="row">
       <Box className="flex-1" style={{ marginTop: '20px' }}>
@@ -305,7 +310,7 @@ function Forum() {
                     />
                   ))}
                 </Stack>
-                <Card>
+                <Card tiny={thinView}>
                   <>
                     {threadList?.rows?.some(
                       (item: any) => item.display_order > 0
@@ -373,14 +378,14 @@ function Forum() {
               </>
             )}
             {forumDetails?.can_post_thread && (
-              <Card py={1.5}>
+              <Card sx={{ px: thinView ? 1 : 2, py: 1.5 }}>
                 <PostEditor forum={forumDetails} />
               </Card>
             )}
           </>
         )}
       </Box>
-      <Aside />
+      {!hideSidebar && <Aside />}
     </Stack>
   )
 }

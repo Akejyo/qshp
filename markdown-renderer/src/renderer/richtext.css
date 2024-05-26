@@ -1,6 +1,6 @@
 .rich-text-content {
-  text-align: justify;
-  text-wrap: pretty;
+  /* text-align: justify;
+  text-wrap: pretty; */
   overflow-wrap: break-word;
 }
 

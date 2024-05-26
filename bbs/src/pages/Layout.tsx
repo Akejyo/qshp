@@ -12,17 +12,16 @@ import {
 } from '@mui/material'
 
 import Announcement from '@/components/Announcement'
+import Breadcrumbs from '@/components/Breadcurmbs'
 import Drawer from '@/components/Drawer'
-import Header from '@/components/Header'
 import ScrollTop from '@/components/ScrollTop'
 import TopBar from '@/components/TopBar'
+import { TopListDialog } from '@/components/TopList/TopListView'
 import { useAppState } from '@/states'
 
 const Layout = () => {
   const { state, dispatch } = useAppState()
-  // 1720 comes from the content width 1280 plus 2 * drawer width 210
-  const matches = useMediaQuery('(min-width: 1720px)')
-  const drawerWidth = 210
+  const thinView = useMediaQuery('(max-width: 560px)')
 
   return (
     <>
@@ -31,20 +30,20 @@ const Layout = () => {
         // style={{ backgroundColor: '#f7f9fe' }}
       >
         <TopBar />
-        <Drawer width={drawerWidth} />
+        <Drawer />
         <Box
           component="main"
           className={`flex w-full flex-col items-center align-middle transition-all`}
-          sx={{
-            marginLeft: {
-              sm: `${state.drawer && !matches ? drawerWidth : 0}px`,
-            },
-          }}
         >
           <Toolbar id="back-to-top-anchor" />
-          <Box id="detail" className="h-full w-full max-w-screen-xl flex-1 p-4">
+          <Box
+            id="detail"
+            className="h-full w-full max-w-screen-xl flex-1"
+            px={thinView ? 1 : 1.75}
+            py={1.75}
+          >
             <Announcement />
-            <Header />
+            <Breadcrumbs />
             <Outlet />
           </Box>
         </Box>
@@ -79,6 +78,19 @@ const Layout = () => {
           </Snackbar>
         )}
       </Box>
+      {state.toplistView?.mounted && (
+        <TopListDialog
+          open={!!state.toplistView?.open}
+          alwaysOpen={!!state.toplistView?.alwaysOpen}
+          noTransition={!!state.toplistView?.noTransition}
+          onClose={() =>
+            dispatch({
+              type: 'close toplist',
+              payload: { manuallyOpened: false },
+            })
+          }
+        />
+      )}
     </>
   )
 }
