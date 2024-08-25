@@ -1,5 +1,13 @@
 import { PlaylistRemove } from '@mui/icons-material'
-import { Box, Button, Paper, Stack, Typography, useTheme } from '@mui/material'
+import {
+  Box,
+  Button,
+  Divider,
+  Paper,
+  Stack,
+  Typography,
+  useTheme,
+} from '@mui/material'
 
 import { UserInfo } from '@/common/interfaces/response'
 import { pages } from '@/utils/routes'
@@ -7,23 +15,19 @@ import { pages } from '@/utils/routes'
 import Avatar from '../Avatar'
 import Link from '../Link'
 
-type BlacklistUserProps = {
+const BlacklistUser = ({
+  data,
+  isMobile,
+}: {
   data: UserInfo
-  className?: string
-}
-const BlacklistUser = ({ data, className }: BlacklistUserProps) => {
+  isMobile: boolean
+}) => {
   const theme = useTheme()
-  return (
-    <Box className={`${className}`}>
-      <Paper
-        className={`shadow-lg pl-6 pr-2 py-4 ${className}`}
-        style={{
-          borderRadius: '10px',
-          borderColor: theme.palette.primary.main,
-        }}
-        variant="outlined"
-      >
-        <Stack direction="row">
+
+  const blacklistUserContent = (
+    <>
+      <Box mx={isMobile ? 2 : 0}>
+        <Stack direction="row" my={isMobile ? 1 : 0}>
           <Box sx={{ mr: 2 }}>
             <Avatar
               alt={data.username}
@@ -45,13 +49,11 @@ const BlacklistUser = ({ data, className }: BlacklistUserProps) => {
                   </Link>
                 </Link>
               </Stack>
-
               <Stack>
                 <Typography variant="subtitle2">{data.user_group}</Typography>
               </Stack>
             </Stack>
           </Box>
-
           <Box sx={{ mt: 0 }}>
             <Button size="small" sx={{ py: 0 }}>
               <PlaylistRemove />
@@ -59,7 +61,27 @@ const BlacklistUser = ({ data, className }: BlacklistUserProps) => {
             </Button>
           </Box>
         </Stack>
-      </Paper>
+        {isMobile && <Divider />}
+      </Box>
+    </>
+  )
+
+  return (
+    <Box>
+      {isMobile ? (
+        blacklistUserContent
+      ) : (
+        <Paper
+          className={`shadow-lg pl-6 pr-2 py-4`}
+          style={{
+            borderRadius: '10px',
+            borderColor: theme.palette.primary.main,
+          }}
+          variant="outlined"
+        >
+          {blacklistUserContent}
+        </Paper>
+      )}
     </Box>
   )
 }

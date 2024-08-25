@@ -10,10 +10,11 @@ import {
   Slider,
 } from '@mui/material'
 
+import { setAvatar } from '@/apis/settings'
 import Avatar from '@/components/Avatar'
 import { useAppState } from '@/states'
 
-const ProfileAvatar = () => {
+const ProfileAvatar = ({ isMobile }: { isMobile: boolean }) => {
   const { state } = useAppState()
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
   const [editor, setEditor] = useState<AvatarEditor | null>(null)
@@ -47,50 +48,61 @@ const ProfileAvatar = () => {
   }
   const closeDialog = () => {
     setIsDialogOpen(false)
+    setScale(1)
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
     }
   }
-  const handleButtonClick = () => {
+  const handleButtonClick = async () => {
     if (editor && imageType !== 'image/gif') {
       const sizes = [48, 120, 200]
-      const images = sizes.map((size) => {
-        const canvas = editor.getImageScaledToCanvas()
-        const targetCanvas = document.createElement('canvas')
-        targetCanvas.width = size
-        targetCanvas.height = size
-        const targetCtx = targetCanvas.getContext('2d')
-        if (targetCtx) {
-          targetCtx.drawImage(canvas, 0, 0, size, size)
-
-          const imageData = targetCtx.getImageData(0, 0, size, size)
-          const isTransparent = Array.from(imageData.data).some(
-            (value, index) => index % 4 === 3 && value < 255
-          )
-
-          targetCanvas.toBlob(
-            (blob) => {
-              if (blob === null) return
-              const url = URL.createObjectURL(blob)
-              const img = new Image()
-              img.src = url
-            },
-            isTransparent ? 'image/png' : 'image/jpeg'
-          )
-          const dataUrl = targetCanvas.toDataURL()
-          return dataUrl
-        }
+      const blobsPromise = sizes.map((size) => {
+        return new Promise((resolve) => {
+          const canvas = editor.getImageScaledToCanvas()
+          const targetCanvas = document.createElement('canvas')
+          targetCanvas.width = size
+          targetCanvas.height = size
+          const targetCtx = targetCanvas.getContext('2d')
+          if (targetCtx) {
+            targetCtx.drawImage(canvas, 0, 0, size, size)
+            const imageData = targetCtx.getImageData(0, 0, size, size)
+            const isTransparent = Array.from(imageData.data).some(
+              (value, index) => index % 4 === 3 && value < 255
+            )
+            targetCanvas.toBlob(
+              (blob) => {
+                resolve(blob)
+              },
+              isTransparent ? 'image/png' : 'image/jpeg'
+            )
+          }
+        })
       })
-      // TODO: upload images
-      console.log(images)
+
+      const blobs = await Promise.all(blobsPromise)
+      const avatars: Blob[] = blobs.filter(
+        (blob): blob is Blob => blob !== null
+      )
+      try {
+        await setAvatar({ avatars: avatars })
+      } catch (error) {
+        console.error('Failed to save avatar:', error)
+      }
       closeDialog()
     }
-    // TODO: upload gif
+
     //gif, scale and cropping rect
     if (editor && imageType === 'image/gif') {
-      console.log('gif')
-      console.log('Scale:', scale)
-      console.log('Cropping rect:', editor.getCroppingRect())
+      if (avatarUrl) {
+        const gif = await fetch(avatarUrl).then((res) => res.blob())
+        setAvatar({
+          avatars: [gif],
+          x0: editor.getCroppingRect().x,
+          x1: editor.getCroppingRect().x + editor.getCroppingRect().width,
+          y0: editor.getCroppingRect().y,
+          y1: editor.getCroppingRect().y + editor.getCroppingRect().height,
+        })
+      }
       closeDialog()
     }
   }
@@ -99,7 +111,7 @@ const ProfileAvatar = () => {
     <>
       <Avatar
         uid={state.user.uid}
-        size={100}
+        size={isMobile ? 70 : 100}
         onClick={handleAvatarClick}
         style={{ cursor: 'pointer' }}
       />
@@ -111,8 +123,8 @@ const ProfileAvatar = () => {
         accept="image/png, image/jpeg, image/gif"
       />
       <Dialog open={isDialogOpen} onClose={closeDialog}>
-        <DialogTitle>编辑头像</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ my: -1 }}>编辑头像</DialogTitle>
+        <DialogContent sx={{ px: 0 }}>
           <Box
             display="flex"
             alignContent="center"
@@ -123,22 +135,28 @@ const ProfileAvatar = () => {
               <AvatarEditor
                 ref={setEditorRef}
                 image={avatarUrl}
-                width={250}
-                height={250}
-                border={60}
+                width={isMobile ? 200 : 300}
+                height={isMobile ? 200 : 300}
+                border={isMobile ? 30 : 60}
                 color={[0, 0, 0, 0.5]}
                 scale={scale}
               />
             )}
-            <Slider
-              value={scale}
-              min={1}
-              max={5}
-              step={0.1}
-              onChange={handleScaleChange}
-              sx={{ my: 2 }}
-            />
-            <Button variant="contained" onClick={handleButtonClick}>
+            <Box display="flex" justifyContent="center" width="100%">
+              <Slider
+                value={scale}
+                min={1}
+                max={5}
+                step={0.1}
+                onChange={handleScaleChange}
+                sx={{ my: 2, width: '80%' }}
+              />
+            </Box>
+            <Button
+              variant="contained"
+              onClick={handleButtonClick}
+              sx={{ mx: 5 }}
+            >
               确定
             </Button>
           </Box>

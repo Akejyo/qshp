@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import {
   Box,
@@ -12,8 +12,10 @@ import {
   useTheme,
 } from '@mui/material'
 
+import { changePassword, checkPassword } from '@/apis/settings'
 import { StyledField } from '@/components/StyledField'
 import { StyledSelect } from '@/components/StyledSelect'
+import { useAppState } from '@/states'
 
 const menuItems = [
   '无安全提问',
@@ -26,7 +28,8 @@ const menuItems = [
   '驾驶执照最后四位数字',
 ]
 
-const PasswordSecurity = () => {
+const PasswordSecurity = ({ isMobile }: { isMobile: boolean }) => {
+  const { state } = useAppState()
   const theme = useTheme()
   const [oldPassword, setOldPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -34,7 +37,50 @@ const PasswordSecurity = () => {
   const [email, setEmail] = useState('')
   const [securityQuestion, setSecurityQuestion] = useState('')
   const [securityAnswer, setSecurityAnswer] = useState('')
+  const [oldPasswordCorrect, setOldPasswordCorrect] = useState(false)
 
+  const TextFieldWidth = isMobile ? '65%' : '40%'
+  useEffect(() => {
+    if (oldPassword) {
+      checkOldPassword()
+    }
+  }, [oldPassword])
+
+  const checkOldPassword = async () => {
+    try {
+      const response = await checkPassword({
+        uid: state.user.uid.toString(),
+        oldpassword: oldPassword,
+      })
+      const result = await response.json()
+      if (result.code === 200) setOldPasswordCorrect(true)
+      setOldPasswordCorrect(false)
+    } catch (error) {
+      console.error('Failed to check old password:', error)
+      return false
+    }
+  }
+
+  const checkNewPassword = () => {
+    if (newPassword && newPasswordConfirm && newPassword === newPasswordConfirm)
+      return true
+    return false
+  }
+
+  const handleSave = async () => {
+    if (oldPasswordCorrect && checkNewPassword()) {
+      try {
+        await changePassword({
+          oldpassword: oldPassword,
+          newpassword: newPassword,
+          email: email,
+          question: securityQuestion,
+        })
+      } catch (error) {
+        console.error('Failed to save privacy settings:', error)
+      }
+    }
+  }
   return (
     <>
       <Box className="relative overflow-hidden p-2" sx={{ width: '100%' }}>
@@ -63,7 +109,7 @@ const PasswordSecurity = () => {
               <StyledField
                 value={oldPassword}
                 onChange={(e) => setOldPassword(e.target.value)}
-                sx={{ width: '40%' }}
+                sx={{ width: TextFieldWidth }}
               />
             </Stack>
             <Stack direction="row" alignItems="center">
@@ -71,7 +117,7 @@ const PasswordSecurity = () => {
               <StyledField
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                sx={{ width: '40%' }}
+                sx={{ width: TextFieldWidth }}
               />
             </Stack>
             <Typography
@@ -90,7 +136,7 @@ const PasswordSecurity = () => {
               <StyledField
                 value={newPasswordConfirm}
                 onChange={(e) => setNewPasswordConfirm(e.target.value)}
-                sx={{ width: '40%' }}
+                sx={{ width: TextFieldWidth }}
               />
             </Stack>
             <Typography
@@ -107,7 +153,7 @@ const PasswordSecurity = () => {
 
             <Stack direction="row" alignItems="center" sx={{ mb: 4 }}>
               <Typography sx={{ width: 100 }}>安全提问</Typography>
-              <FormControl sx={{ width: '30%' }}>
+              <FormControl sx={{ width: isMobile ? '65%' : '40%' }}>
                 <StyledSelect
                   value={securityQuestion}
                   onChange={(e) => {
@@ -128,20 +174,24 @@ const PasswordSecurity = () => {
               <StyledField
                 value={securityAnswer}
                 onChange={(e) => setSecurityAnswer(e.target.value)}
-                sx={{ width: '30%' }}
+                sx={{ width: isMobile ? '65%' : '40%' }}
               />
             </Stack>
-            <Stack direction="row" alignItems="center" sx={{ mb: 8 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              sx={{ mb: isMobile ? 3 : 8 }}
+            >
               <Typography sx={{ width: 100 }}>邮箱</Typography>
               <StyledField
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                sx={{ width: '40%' }}
+                sx={{ width: TextFieldWidth }}
               />
             </Stack>
-            <Stack direction="row" sx={{ mb: 7 }}>
+            <Stack direction="row" sx={{ mb: 3 }}>
               <Box sx={{ width: 100 }}></Box>
-              <Button variant="contained" sx={{ px: 4 }}>
+              <Button variant="contained" sx={{ px: 4 }} onClick={handleSave}>
                 保存
               </Button>
             </Stack>

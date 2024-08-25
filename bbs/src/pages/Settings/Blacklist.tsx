@@ -21,7 +21,7 @@ const userInfo: UserInfo = {
   last_login_at: Date.now(),
 }
 
-const Blacklist = () => {
+const Blacklist = ({ isMobile }: { isMobile: boolean }) => {
   const theme = useTheme()
 
   return (
@@ -30,12 +30,12 @@ const Blacklist = () => {
         <Paper elevation={3} sx={{ borderRadius: '10px', overflow: 'hidden' }}>
           <Box sx={{ pl: 3 }}>
             <Stack direction="row" alignItems="center" sx={{ my: 2 }}>
-              <Typography>添加黑名单成员</Typography>
+              {!isMobile && <Typography>添加黑名单成员</Typography>}
               <TextField
                 sx={{ width: '50%', mx: 2 }}
                 size="small"
                 variant="outlined"
-                placeholder="输入用户名"
+                placeholder={isMobile ? '添加黑名单成员' : '输入用户名'}
               />
               <Button variant="contained" style={{ minWidth: '10px' }}>
                 添加
@@ -46,13 +46,21 @@ const Blacklist = () => {
             variant="middle"
             style={{ backgroundColor: 'rgba(128, 128, 128, 0.3)' }}
           />
-          <Grid container spacing={3} sx={{ p: 3 }}>
-            {Array.from(new Array(5)).map((_, index) => (
-              <Grid item xs={4} key={index} sx={{ py: 1 }}>
-                <BlacklistUser data={userInfo} />
-              </Grid>
-            ))}
-          </Grid>
+          {isMobile ? (
+            <>
+              <BlacklistUser data={userInfo} isMobile={isMobile} />
+              <BlacklistUser data={userInfo} isMobile={isMobile} />
+              <BlacklistUser data={userInfo} isMobile={isMobile} />
+            </>
+          ) : (
+            <Grid container spacing={3} sx={{ p: 3 }}>
+              {Array.from(new Array(5)).map((_, index) => (
+                <Grid item xs={4} key={index} sx={{ py: 1 }}>
+                  <BlacklistUser data={userInfo} isMobile={isMobile} />
+                </Grid>
+              ))}
+            </Grid>
+          )}
         </Paper>
       </Box>
     </>

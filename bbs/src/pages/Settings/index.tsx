@@ -7,7 +7,11 @@ import {
   ListItemButton,
   ListItemText,
   Paper,
+  Tab,
+  TabScrollButton,
+  Tabs,
   Typography,
+  useMediaQuery,
 } from '@mui/material'
 
 import Link from '@/components/Link'
@@ -70,9 +74,12 @@ const Settings = () => {
   const [selectedIndex, setSelectedIndex] = useState(
     initialIndex !== -1 ? initialIndex : 0
   )
+  const isMobile = useMediaQuery('(max-width: 1080px)')
 
   const handleListItemClick = (
-    event: React.MouseEvent<HTMLDivElement, MouseEvent>,
+    event:
+      | React.MouseEvent<HTMLAnchorElement, MouseEvent>
+      | React.MouseEvent<HTMLDivElement, MouseEvent>,
     index: number,
     item: (typeof listItems)[number]
   ) => {
@@ -81,46 +88,82 @@ const Settings = () => {
 
   const SelectedComponent = listItems[selectedIndex].Component
   return (
-    <Box sx={{ pr: 2, pt: 1, width: '100%' }}>
-      <Typography variant="h5" sx={{ mb: 1 }}>
-        {listItems[selectedIndex].name}
-      </Typography>
+    <Box sx={{ pt: 1, width: '100%' }}>
+      {!isMobile && (
+        <Typography variant="h5" sx={{ mb: 1 }}>
+          {listItems[selectedIndex].name}
+        </Typography>
+      )}
       <Box sx={{ display: 'flex' }}>
-        <Box sx={{ height: 200, mr: 4 }}>
-          <Paper
-            elevation={3}
-            sx={{ borderRadius: '10px', overflow: 'hidden' }}
-          >
-            <Box sx={{ width: 180 }}>
-              <List disablePadding>
-                {listItems.map((item, index) => (
-                  <Link
-                    to={
-                      item.id == undefined ? item.link : pages.settings(item.id)
-                    }
-                    key={item.name}
-                    underline="none"
-                    color="inherit"
-                    external={item.external}
-                    target={item.external ? '_blank' : undefined}
-                  >
-                    <ListItemButton
-                      key={index}
-                      selected={selectedIndex === index}
-                      onClick={(event) =>
-                        handleListItemClick(event, index, item)
-                      }
-                      sx={{ height: 40 }}
-                    >
-                      <ListItemText primary={item.name} />
-                    </ListItemButton>
-                  </Link>
-                ))}
-              </List>
+        {isMobile ? (
+          <Box sx={{ width: '100%' }}>
+            <Tabs
+              value={selectedIndex}
+              variant="scrollable"
+              scrollButtons="auto"
+              sx={{ maxWidth: '100%' }}
+              ScrollButtonComponent={(props) => (
+                <TabScrollButton {...props} sx={{ color: 'primary.main' }} />
+              )}
+            >
+              {listItems.map((item, index) => (
+                <Tab
+                  key={index}
+                  label={item.name}
+                  value={index}
+                  to={
+                    item.id == undefined ? item.link : pages.settings(item.id)
+                  }
+                  component={Link}
+                  onClick={(
+                    event: React.MouseEvent<HTMLAnchorElement, MouseEvent>
+                  ) => handleListItemClick(event, index, item)}
+                />
+              ))}
+            </Tabs>
+            {SelectedComponent && <SelectedComponent isMobile={isMobile} />}
+          </Box>
+        ) : (
+          <>
+            <Box sx={{ height: 200, mr: 4 }}>
+              <Paper
+                elevation={3}
+                sx={{ borderRadius: '10px', overflow: 'hidden' }}
+              >
+                <Box sx={{ width: 180 }}>
+                  <List disablePadding>
+                    {listItems.map((item, index) => (
+                      <Link
+                        to={
+                          item.id == undefined
+                            ? item.link
+                            : pages.settings(item.id)
+                        }
+                        key={item.name}
+                        underline="none"
+                        color="inherit"
+                        external={item.external}
+                        target={item.external ? '_blank' : undefined}
+                      >
+                        <ListItemButton
+                          key={index}
+                          selected={selectedIndex === index}
+                          onClick={(event) =>
+                            handleListItemClick(event, index, item)
+                          }
+                          sx={{ height: 40 }}
+                        >
+                          <ListItemText primary={item.name} />
+                        </ListItemButton>
+                      </Link>
+                    ))}
+                  </List>
+                </Box>
+              </Paper>
             </Box>
-          </Paper>
-        </Box>
-        {SelectedComponent && <SelectedComponent />}
+            {SelectedComponent && <SelectedComponent isMobile={isMobile} />}
+          </>
+        )}
       </Box>
     </Box>
   )

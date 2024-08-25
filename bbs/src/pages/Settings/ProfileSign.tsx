@@ -28,8 +28,16 @@ import { StyledField } from '@/components/StyledField'
 import { kSmilyBasePath } from '../../../../markdown-renderer/src/renderer/renderer'
 import { smilyData } from '../../../../markdown-renderer/src/renderer/smilyData'
 
-const ProfileSign = () => {
-  const [sign, setSign] = useState('之前的个人签名')
+const ProfileSign = ({
+  userSign,
+  isMobile,
+  onSignChange,
+}: {
+  userSign: string
+  isMobile: boolean
+  onSignChange: React.Dispatch<React.SetStateAction<string>>
+}) => {
+  const [sign, setSign] = useState(userSign)
   const [color, setColor] = useState('')
   const [imageAnchorEl, setImageAnchorEl] = useState<null | HTMLElement>(null)
   const [imageUrl, setImageUrl] = useState<string>('')
@@ -44,6 +52,10 @@ const ProfileSign = () => {
   const [previewSign, setPreviewSign] = useState<string>('')
   const inputRef = useRef<HTMLInputElement>(null)
   const position = useRef<number>(0)
+
+  useEffect(() => {
+    onSignChange(sign)
+  }, [sign])
 
   const handleBoldButtonClick = () => {
     if (
@@ -217,8 +229,8 @@ const ProfileSign = () => {
 
   return (
     <>
-      <Stack direction="column" sx={{ width: '70%' }}>
-        <Stack direction="row" spacing={-1}>
+      <Stack direction="column" sx={{ width: isMobile ? '100%' : '70%' }}>
+        <Stack direction="row" spacing={-1} sx={{ ml: isMobile ? -1 : 0 }}>
           <Tooltip title="文字加粗">
             <IconButton onClick={handleBoldButtonClick}>
               <FormatBold />
